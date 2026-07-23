@@ -47,9 +47,76 @@ services:
     networks:
       - ssdnet
 
+  sonarqube-db:
+    image: postgres:16-alpine
+    container_name: ssd-sonar-db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - sonar-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - ssdnet
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: ssd-sonarqube
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+    networks:
+      - ssdnet
+
+  # One-shot: waits for SonarQube to boot, then changes the default
+  # admin/admin credential to the required password via the Web API.
+  sonar-init:
+    image: curlimages/curl:latest
+    container_name: ssd-sonar-init
+    depends_on:
+      - sonarqube
+    restart: "no"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until curl -sf http://sonarqube:9000/api/system/status | grep -q '"status":"UP"'; do
+          echo 'Waiting for SonarQube to start...'
+          sleep 5
+        done
+        curl -s -u admin:admin -X POST http://sonarqube:9000/api/users/change_password \
+          --data-urlencode login=admin \
+          --data-urlencode previousPassword=admin \
+          --data-urlencode password='2401221@SIT.singaporetech.edu.sg' \
+          && echo 'Admin password configured.' \
+          || echo 'Password already set (or change failed) - check manually if needed.'
+    networks:
+      - ssdnet
+
 volumes:
   gitea-data:
   db-data:
+  sonar-db-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
 
 networks:
   ssdnet:
