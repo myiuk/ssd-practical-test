@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import psycopg2
 from flask import Flask, render_template, request
@@ -16,6 +16,8 @@ app = Flask(__name__)
 MIN_LENGTH = 3
 MAX_LENGTH = 50
 ALLOWED_PATTERN = re.compile(r"^[A-Za-z0-9 ]+$")
+
+SGT = timezone(timedelta(hours=8))  # Singapore Time, fixed UTC+8 offset (no DST)
 
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "db"),
@@ -66,7 +68,7 @@ def log_search(term):
     with conn, conn.cursor() as cur:
         cur.execute(
             'INSERT INTO "2401221" (search_query, query_time) VALUES (%s, %s)',
-            (term, datetime.now()),
+            (term, datetime.now(SGT).replace(tzinfo=None)),
         )
     conn.close()
 
