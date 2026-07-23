@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><title>Search</title></head>
+<body>
+  <h1>Search</h1>
+  {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+  <form id="searchForm" action="/search" method="post" onsubmit="return validateForm()">
+    <input type="text" id="search_term" name="search_term" required>
+    <button type="submit">Submit</button>
+  </form>
+  <script>
+    // Frontend validation (OWASP Top 10 2024 Proactive Control C3).
+    // Backend re-validates independently; this is only a first line of defense.
+    function validateForm() {
+      var input = document.getElementById("search_term");
+      var pattern = /^[A-Za-z0-9 ]{3,50}$/;
+      if (!pattern.test(input.value)) {
+        input.value = "";
+        alert("Invalid input. Please try again.");
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>

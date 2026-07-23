@@ -1,0 +1,42 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: ssd-gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__server__DOMAIN=127.0.0.1
+      - GITEA__server__ROOT_URL=http://127.0.0.1:3000/
+      - GITEA__server__SSH_DOMAIN=127.0.0.1
+      - GITEA__server__SSH_PORT=2222
+    restart: unless-stopped
+    volumes:
+      - gitea-data:/data
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    networks:
+      - ssdnet
+
+  db:
+    image: postgres:16-alpine
+    container_name: ssd-db
+    environment:
+      - POSTGRES_USER=ssduser
+      - POSTGRES_PASSWORD=ssdpass
+      - POSTGRES_DB=ssddb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - ssdnet
+
+  app:
+    build: ./app
+    container_name: ssd-app
+    environment:
+      - DB_HOST=db
+      - DB_NAME=ssddb
+      - DB_USER=ssduser
+      - DB_PASSWORD=ssdpass
+  
