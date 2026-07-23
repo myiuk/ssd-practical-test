@@ -23,7 +23,9 @@ DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "db"),
     "dbname": os.environ.get("DB_NAME", "ssddb"),
     "user": os.environ.get("DB_USER", "ssduser"),
-    "password": os.environ.get("DB_PASSWORD", "ssdpass"),
+    # No hardcoded default: the password must always come from the
+    # environment (set in docker-compose.yml), never from source code.
+    "password": os.environ.get("DB_PASSWORD"),
 }
 
 
