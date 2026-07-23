@@ -39,4 +39,18 @@ services:
       - DB_NAME=ssddb
       - DB_USER=ssduser
       - DB_PASSWORD=ssdpass
-  
+    ports:
+      - "80:5000"
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - ssdnet
+
+volumes:
+  gitea-data:
+  db-data:
+
+networks:
+  ssdnet:
+    driver: bridge
